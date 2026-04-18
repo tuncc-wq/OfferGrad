@@ -386,8 +386,8 @@ async function loadStats(){
     const avg=data.find(r=>r.id==='avg_salary_diff')?.value||0;
     document.getElementById('c1').textContent=comp.toLocaleString();
     document.getElementById('c2').textContent=avg>0?'$'+Math.round(avg).toLocaleString():'—';
-    document.getElementById('c3').textContent='22';
-    document.getElementById('c4').textContent='All';
+    document.getElementById('c3').textContent='All';
+    document.getElementById('c4').textContent='22';
   }catch(e){console.log('Stats error',e);}
 }
 loadStats();
