@@ -383,10 +383,6 @@ document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.le
 // nav
 window.addEventListener('scroll',()=>document.getElementById('nav').classList.toggle('stuck',scrollY>40));
 
-// counters
-function cnt(el,t,suf,dur){let s=0,step=t/60;const tm=setInterval(()=>{s+=step;if(s>=t){s=t;clearInterval(tm);}el.textContent=Math.floor(s).toLocaleString()+suf;},dur/60);}
-setTimeout(()=>{cnt(document.getElementById('c1'),14200,'',1200);cnt(document.getElementById('c2'),8400,'',1400);cnt(document.getElementById('c3'),30,'',800);cnt(document.getElementById('c4'),22,'',600);},400);
-
 // terminal score bar
 setTimeout(()=>{document.getElementById('tsf').style.width='91%';},800);
 
