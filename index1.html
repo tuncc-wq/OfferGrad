@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>OfferGrad — Decode Your Offers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --black:#050505;--white:#f0ede6;--cream:#e8e4db;
+  --lime:#d4ff00;--lime2:#b8e000;--orange:#ff4d1c;
+  --blue:#0057ff;--muted:#666;--border:#1a1a1a;--border2:#2a2a2a;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+::selection{background:var(--lime);color:#000;}
+body{background:var(--black);color:var(--white);font-family:'DM Mono',monospace;overflow-x:hidden;cursor:none;}
+
+/* GRAIN */
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:9997;opacity:0.6;}
+
+/* CURSOR */
+#cur{position:fixed;width:10px;height:10px;background:var(--lime);border-radius:50%;pointer-events:none;z-index:9999;transition:transform 0.1s;}
+#cur2{position:fixed;width:36px;height:36px;border:1px solid rgba(212,255,0,0.35);border-radius:50%;pointer-events:none;z-index:9998;transition:left 0.12s,top 0.12s;}
+body:has(a:hover) #cur,body:has(button:hover) #cur{transform:scale(3);background:var(--lime);mix-blend-mode:difference;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 3rem;height:60px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid transparent;transition:all 0.3s;}
+nav.stuck{background:rgba(5,5,5,0.96);border-color:var(--border2);backdrop-filter:blur(20px);}
+.nav-logo{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;color:var(--white);}
+.nav-logo em{color:var(--lime);font-style:normal;}
+.nav-r{display:flex;align-items:center;gap:2rem;}
+.nav-link{font-size:11px;font-weight:400;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color 0.2s;}
+.nav-link:hover{color:var(--white);}
+.nav-cta{padding:9px 22px;background:var(--lime);color:#000;font-family:'DM Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;border:none;cursor:none;text-decoration:none;transition:all 0.2s;}
+.nav-cta:hover{background:var(--white);}
+
+/* HERO */
+.hero{min-height:100vh;display:grid;grid-template-columns:1fr 1fr;position:relative;overflow:hidden;}
+.hero-left{padding:140px 3rem 6rem;display:flex;flex-direction:column;justify-content:space-between;border-right:1px solid var(--border);}
+.hero-right{padding:140px 3rem 6rem;display:flex;flex-direction:column;justify-content:flex-end;position:relative;}
+
+.hero-tag{font-size:10px;font-weight:400;letter-spacing:0.15em;text-transform:uppercase;color:var(--lime);margin-bottom:2rem;display:flex;align-items:center;gap:8px;}
+.hero-tag::before{content:'';width:24px;height:1px;background:var(--lime);}
+
+.hero-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(80px,10vw,160px);line-height:0.88;letter-spacing:-1px;margin-bottom:3rem;}
+.hero-title .outline{-webkit-text-stroke:1px rgba(240,237,230,0.3);color:transparent;}
+.hero-title .lime{color:var(--lime);}
+
+.hero-desc{font-size:13px;font-weight:300;line-height:1.8;color:rgba(240,237,230,0.55);max-width:400px;margin-bottom:3rem;font-style:italic;}
+
+.hero-actions{display:flex;gap:1rem;align-items:center;}
+.btn-hero{padding:16px 40px;background:var(--lime);color:#000;font-family:'DM Mono',monospace;font-size:12px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;border:none;cursor:none;transition:all 0.25s;display:inline-block;}
+.btn-hero:hover{background:var(--white);transform:translate(-2px,-2px);}
+.btn-ghost{font-size:11px;color:rgba(240,237,230,0.4);text-decoration:none;letter-spacing:0.06em;transition:color 0.2s;}
+.btn-ghost:hover{color:var(--white);}
+
+.hero-stats{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--border);margin-top:auto;}
+.hstat{padding:1.5rem;border-right:1px solid var(--border);}
+.hstat:nth-child(2){border-right:none;}
+.hstat:nth-child(3),.hstat:nth-child(4){border-top:1px solid var(--border);}
+.hstat-n{font-family:'Bebas Neue',sans-serif;font-size:48px;color:var(--lime);line-height:1;}
+.hstat-l{font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-top:4px;}
+
+/* TICKER */
+.ticker-wrap{border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:12px 0;overflow:hidden;background:rgba(212,255,0,0.03);}
+.ticker{display:flex;gap:0;width:max-content;animation:tick 25s linear infinite;}
+@keyframes tick{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+.tick-item{display:flex;align-items:center;gap:16px;padding:0 24px;white-space:nowrap;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:rgba(240,237,230,0.4);}
+.tick-sep{color:var(--lime);font-size:8px;}
+.tick-hi{color:var(--lime);}
+
+/* HERO RIGHT */
+.terminal-card{background:var(--border);border:1px solid var(--border2);padding:0;font-size:12px;overflow:hidden;}
+.term-header{padding:12px 16px;background:#0d0d0d;border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:8px;}
+.term-dot{width:10px;height:10px;border-radius:50%;}
+.term-title{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-left:auto;}
+.term-body{padding:20px;font-family:'DM Mono',monospace;font-weight:300;line-height:1.9;}
+.term-line{display:flex;gap:12px;align-items:flex-start;}
+.term-key{color:var(--muted);min-width:140px;font-size:11px;}
+.term-val{color:var(--white);font-size:11px;}
+.term-val.lime{color:var(--lime);}
+.term-val.red{color:var(--orange);}
+.term-divider{border:none;border-top:1px solid var(--border2);margin:12px 0;}
+.term-score-row{display:flex;align-items:center;gap:12px;margin-top:16px;}
+.term-score-bar{flex:1;height:2px;background:var(--border2);}
+.term-score-fill{height:100%;background:var(--lime);transition:width 1s;}
+.term-score-num{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--lime);}
+.winner-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:var(--lime);color:#000;font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:16px;}
+
+/* MARQUEE 2 - LIME BG */
+.lime-band{background:var(--lime);padding:14px 0;overflow:hidden;}
+.lime-ticker{display:flex;gap:0;width:max-content;animation:tick2 18s linear infinite;}
+@keyframes tick2{from{transform:translateX(-50%);}to{transform:translateX(0);}}
+.lime-item{display:flex;align-items:center;gap:16px;padding:0 20px;white-space:nowrap;font-size:12px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:#000;}
+.lime-sep{opacity:0.3;}
+
+/* FEATURES SECTION */
+.features{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--border);}
+.feat{padding:3rem 2.5rem;border-right:1px solid var(--border);position:relative;overflow:hidden;transition:background 0.3s;}
+.feat:last-child{border-right:none;}
+.feat:hover{background:rgba(212,255,0,0.03);}
+.feat-num{font-family:'Bebas Neue',sans-serif;font-size:80px;color:rgba(212,255,0,0.08);position:absolute;top:1rem;right:1.5rem;line-height:1;transition:color 0.3s;}
+.feat:hover .feat-num{color:rgba(212,255,0,0.15);}
+.feat-icon{font-size:28px;margin-bottom:1.5rem;}
+.feat-title{font-family:'Playfair Display',serif;font-size:22px;font-style:italic;margin-bottom:1rem;line-height:1.2;}
+.feat-desc{font-size:12px;font-weight:300;color:rgba(240,237,230,0.5);line-height:1.8;}
+.feat-tag{display:inline-block;margin-top:1.5rem;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--lime);border-bottom:1px solid var(--lime);padding-bottom:2px;}
+
+/* REVIEWS SCROLL */
+.reviews-section{padding:6rem 0;border-top:1px solid var(--border);overflow:hidden;position:relative;}
+.reviews-section::before,.reviews-section::after{content:'';position:absolute;top:0;bottom:0;width:150px;z-index:2;}
+.reviews-section::before{left:0;background:linear-gradient(90deg,var(--black),transparent);}
+.reviews-section::after{right:0;background:linear-gradient(-90deg,var(--black),transparent);}
+.reviews-header{padding:0 3rem;margin-bottom:3rem;display:flex;align-items:baseline;gap:1rem;}
+.reviews-title{font-family:'Bebas Neue',sans-serif;font-size:64px;letter-spacing:1px;}
+.reviews-sub{font-size:11px;color:var(--muted);font-style:italic;}
+.reviews-track{display:flex;gap:1.5rem;width:max-content;animation:tick 45s linear infinite;}
+.rev-card{background:#0d0d0d;border:1px solid var(--border2);padding:1.75rem 2rem;width:340px;flex-shrink:0;transition:border-color 0.3s;}
+.rev-card:hover{border-color:rgba(212,255,0,0.3);}
+.rev-top{display:flex;align-items:center;gap:12px;margin-bottom:1.25rem;}
+.rev-av{width:38px;height:38px;border-radius:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;flex-shrink:0;}
+.rev-name{font-size:13px;font-weight:500;letter-spacing:0.02em;}
+.rev-role{font-size:10px;color:var(--muted);margin-top:2px;letter-spacing:0.04em;}
+.rev-text{font-size:12px;font-weight:300;color:rgba(240,237,230,0.65);line-height:1.8;font-style:italic;}
+.rev-tag{display:inline-block;margin-top:1rem;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;padding:3px 8px;border:1px solid var(--border2);}
+
+/* HOW IT WORKS */
+.how{padding:8rem 3rem;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 2fr;gap:6rem;align-items:start;}
+.how-label{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--lime);margin-bottom:1rem;}
+.how-title{font-family:'Bebas Neue',sans-serif;font-size:72px;line-height:0.9;letter-spacing:1px;}
+.how-steps{display:flex;flex-direction:column;gap:0;}
+.how-step{padding:2.5rem 0;border-bottom:1px solid var(--border);display:grid;grid-template-columns:60px 1fr;gap:2rem;align-items:flex-start;cursor:none;transition:all 0.3s;}
+.how-step:hover .step-num{color:var(--lime);}
+.step-num{font-family:'Bebas Neue',sans-serif;font-size:52px;color:rgba(240,237,230,0.1);line-height:1;transition:color 0.3s;}
+.step-body{}
+.step-title{font-size:15px;font-weight:500;letter-spacing:0.02em;margin-bottom:8px;}
+.step-desc{font-size:12px;font-weight:300;color:rgba(240,237,230,0.5);line-height:1.8;}
+
+/* CTA */
+.cta{padding:10rem 3rem;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:6rem;align-items:center;}
+.cta-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(64px,8vw,120px);line-height:0.88;letter-spacing:1px;}
+.cta-title .lime{color:var(--lime);}
+.cta-right{display:flex;flex-direction:column;gap:2rem;}
+.cta-desc{font-size:13px;font-weight:300;color:rgba(240,237,230,0.5);line-height:1.9;font-style:italic;}
+.cta-btn{display:inline-flex;align-items:center;gap:16px;padding:20px 40px;background:var(--lime);color:#000;font-family:'DM Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;text-decoration:none;transition:all 0.25s;align-self:flex-start;}
+.cta-btn:hover{background:var(--white);transform:translate(-3px,-3px);}
+.cta-note{font-size:10px;color:var(--muted);letter-spacing:0.06em;}
+
+/* FOOTER */
+footer{border-top:1px solid var(--border);padding:2rem 3rem;display:flex;justify-content:space-between;align-items:center;}
+.foot-logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;}
+.foot-logo em{color:var(--lime);font-style:normal;}
+.foot-copy{font-size:10px;color:var(--muted);letter-spacing:0.06em;}
+
+@media(max-width:900px){
+  .hero{grid-template-columns:1fr;}
+  .hero-right{display:none;}
+  .features{grid-template-columns:1fr;}
+  .feat{border-right:none;border-bottom:1px solid var(--border);}
+  .how{grid-template-columns:1fr;gap:3rem;}
+  .cta{grid-template-columns:1fr;}
+  nav{padding:0 1.5rem;}
+  .hero-left{padding:120px 1.5rem 4rem;}
+  .hero-title{font-size:clamp(60px,15vw,120px);}
+}
+</style>
+</head>
+<body>
+<div id="cur"></div>
+<div id="cur2"></div>
+
+<nav id="nav">
+  <div class="nav-logo">Offer<em>Grad</em></div>
+  <div class="nav-r">
+    <a href="#features" class="nav-link">Features</a>
+    <a href="#reviews" class="nav-link">Reviews</a>
+    <a href="#how" class="nav-link">How it works</a>
+    <a href="app.html" class="nav-cta">Compare now</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-left">
+    <div>
+      <div class="hero-tag">Built for CS students &amp; new grads worldwide</div>
+      <h1 class="hero-title">
+        DECODE<br/>
+        YOUR<br/>
+        <span class="lime">OFFER.</span>
+      </h1>
+      <p class="hero-desc">
+        The only offer comparison tool built specifically for new grad CS students.
+        Not bloated. Not for VPs. Real numbers, real talk, real decisions.
+      </p>
+      <div class="hero-actions">
+        <a href="app.html" class="btn-hero">Compare my offers →</a>
+        <a href="#how" class="btn-ghost">See how it works</a>
+      </div>
+    </div>
+    <div class="hero-stats">
+      <div class="hstat"><div class="hstat-n" id="c1">0</div><div class="hstat-l">Offers compared</div></div>
+      <div class="hstat"><div class="hstat-n" id="c2">0</div><div class="hstat-l">Avg extra salary found</div></div>
+      <div class="hstat"><div class="hstat-n" id="c3">0</div><div class="hstat-l">Countries supported</div></div>
+      <div class="hstat"><div class="hstat-n" id="c4">0</div><div class="hstat-l">Currencies</div></div>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div style="margin-bottom:2rem;">
+      <div style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem;">// Live comparison output</div>
+      <div class="terminal-card">
+        <div class="term-header">
+          <div class="term-dot" style="background:#ff5f57;"></div>
+          <div class="term-dot" style="background:#febc2e;"></div>
+          <div class="term-dot" style="background:#28c840;"></div>
+          <div class="term-title">offergrad_analysis.json</div>
+        </div>
+        <div class="term-body">
+          <div class="winner-pill">⚡ Winner detected</div>
+          <div class="term-line"><span class="term-key">offer_a.company</span><span class="term-val">"Google NYC"</span></div>
+          <div class="term-line"><span class="term-key">offer_a.base</span><span class="term-val">"$142,000"</span></div>
+          <div class="term-line"><span class="term-key">offer_a.col_adjusted</span><span class="term-val red">"$98,200"</span></div>
+          <div class="term-line"><span class="term-key">offer_a.monthly_net</span><span class="term-val red">"$6,340"</span></div>
+          <hr class="term-divider"/>
+          <div class="term-line"><span class="term-key">offer_b.company</span><span class="term-val">"Stripe Austin"</span></div>
+          <div class="term-line"><span class="term-key">offer_b.base</span><span class="term-val">"$128,000"</span></div>
+          <div class="term-line"><span class="term-key">offer_b.col_adjusted</span><span class="term-val lime">"$128,000"</span></div>
+          <div class="term-line"><span class="term-key">offer_b.monthly_net</span><span class="term-val lime">"$8,460"</span></div>
+          <hr class="term-divider"/>
+          <div class="term-line"><span class="term-key">verdict</span><span class="term-val lime">"Stripe wins by +$2,120/mo"</span></div>
+          <div class="term-score-row">
+            <div style="font-size:10px;color:var(--muted);white-space:nowrap;">SCORE</div>
+            <div class="term-score-bar"><div class="term-score-fill" id="tsf" style="width:0%"></div></div>
+            <div class="term-score-num">91</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="ticker-wrap">
+  <div class="ticker">
+    <div class="tick-item"><span class="tick-hi">COL-Adjusted Salary</span><span class="tick-sep">◆</span></div>
+    <div class="tick-item">Equity Vesting Analysis<span class="tick-sep">◆</span></div>
+    <div class="tick-item"><span class="tick-hi">Resume Impact Score</span><span class="tick-sep">◆</span></div>
+    <div class="tick-item">Student Loan Context<span class="tick-sep">◆</span></div>
+    <div class="tick-item"><span class="tick-hi">2-Year Exit Modeling</span><span class="tick-sep">◆</span></div>
+    <div class="tick-item">22 Currencies Supported<span class="tick-sep">◆</span></div>
+    <div class="tick-item"><span class="tick-hi">Real Talk Mode</span><span class="tick-sep">◆</span></div>
+    <div class="tick-item">Global Cost of Living<span class="tick-sep">◆</span></div>
+    <div class="tick-item"><span class="tick-hi">COL-Adjusted Salary</span><span class="tick-sep">◆</span></div>
+    <div class="tick-item">Equity Vesting Analysis<span class="tick-sep">◆</span></div>
+    <div class="tick-item"><span class="tick-hi">Resume Impact Score</span><span class="tick-sep">◆</span></div>
+    <div class="tick-item">Student Loan Context<span class="tick-sep">◆</span></div>
+    <div class="tick-item"><span class="tick-hi">2-Year Exit Modeling</span><span class="tick-sep">◆</span></div>
+    <div class="tick-item">22 Currencies Supported<span class="tick-sep">◆</span></div>
+    <div class="tick-item"><span class="tick-hi">Real Talk Mode</span><span class="tick-sep">◆</span></div>
+    <div class="tick-item">Global Cost of Living<span class="tick-sep">◆</span></div>
+  </div>
+</div>
+
+<section class="features" id="features">
+  <div class="feat">
+    <div class="feat-num">01</div>
+    <div class="feat-icon">💰</div>
+    <div class="feat-title">Real purchasing power, not just salary</div>
+    <p class="feat-desc">$120k in San Francisco is not $120k in Istanbul. We normalize every offer against real cost-of-living data so you see what you actually keep.</p>
+    <div class="feat-tag">COL Normalization</div>
+  </div>
+  <div class="feat">
+    <div class="feat-num">02</div>
+    <div class="feat-icon">🚀</div>
+    <div class="feat-title">Which offer helps your next job more?</div>
+    <p class="feat-desc">Resume impact score rates each company's career leverage — which name opens more doors when you're ready to move again in 2 years.</p>
+    <div class="feat-tag">Resume Score</div>
+  </div>
+  <div class="feat">
+    <div class="feat-num">03</div>
+    <div class="feat-icon">📊</div>
+    <div class="feat-title">Built for humans, not finance bros</div>
+    <p class="feat-desc">Enter your student loans, rent, tax rate. We show you actual take-home in plain language — not total comp figures nobody can live on.</p>
+    <div class="feat-tag">Real Talk Mode</div>
+  </div>
+</section>
+
+<div class="lime-band">
+  <div class="lime-ticker">
+    <div class="lime-item">Free for students<span class="lime-sep"> ◆ </span></div>
+    <div class="lime-item">No jargon<span class="lime-sep"> ◆ </span></div>
+    <div class="lime-item">3 minutes<span class="lime-sep"> ◆ </span></div>
+    <div class="lime-item">22 currencies<span class="lime-sep"> ◆ </span></div>
+    <div class="lime-item">Built by a CS student<span class="lime-sep"> ◆ </span></div>
+    <div class="lime-item">Any country<span class="lime-sep"> ◆ </span></div>
+    <div class="lime-item">Instant results<span class="lime-sep"> ◆ </span></div>
+    <div class="lime-item">Free for students<span class="lime-sep"> ◆ </span></div>
+    <div class="lime-item">No jargon<span class="lime-sep"> ◆ </span></div>
+    <div class="lime-item">3 minutes<span class="lime-sep"> ◆ </span></div>
+    <div class="lime-item">22 currencies<span class="lime-sep"> ◆ </span></div>
+    <div class="lime-item">Built by a CS student<span class="lime-sep"> ◆ </span></div>
+    <div class="lime-item">Any country<span class="lime-sep"> ◆ </span></div>
+    <div class="lime-item">Instant results<span class="lime-sep"> ◆ </span></div>
+  </div>
+</div>
+
+<section class="reviews-section" id="reviews">
+  <div class="reviews-header">
+    <div class="reviews-title">WHAT GRADS SAY</div>
+    <div class="reviews-sub">// real feedback, real decisions</div>
+  </div>
+  <div class="reviews-track">
+    <div class="rev-card"><div class="rev-top"><div class="rev-av" style="background:rgba(212,255,0,0.12);color:var(--lime);">AK</div><div><div class="rev-name">Anya K.</div><div class="rev-role">SWE @ Airbnb · CS '24</div></div></div><div class="rev-text">"Chose a $12k lower salary. OfferGrad showed Austin COL made it $18k MORE in real money. Best career decision I've ever made."</div><div class="rev-tag">Cost of Living</div></div>
+    <div class="rev-card"><div class="rev-top"><div class="rev-av" style="background:rgba(0,87,255,0.15);color:#6b8fff;">MR</div><div><div class="rev-name">Marcus R.</div><div class="rev-role">ML Eng @ OpenAI · CS '25</div></div></div><div class="rev-text">"The resume impact score is genius. My 'lower' offer was way better for the next job hop. Used it to negotiate $15k more."</div><div class="rev-tag">Resume Score</div></div>
+    <div class="rev-card"><div class="rev-top"><div class="rev-av" style="background:rgba(255,77,28,0.15);color:var(--orange);">SC</div><div><div class="rev-name">Sofia C.</div><div class="rev-role">Backend Eng @ Stripe · CS '24</div></div></div><div class="rev-text">"Every other tool treats me like a 40-year-old VP. OfferGrad talks to me like I have student loans. Because I do."</div><div class="rev-tag">Real Talk</div></div>
+    <div class="rev-card"><div class="rev-top"><div class="rev-av" style="background:rgba(212,255,0,0.12);color:var(--lime);">JT</div><div><div class="rev-name">James T.</div><div class="rev-role">SWE @ Meta · CS '25</div></div></div><div class="rev-text">"The equity vesting breakdown saved me. I almost picked the wrong offer until I saw the 2-year cliff on the startup equity."</div><div class="rev-tag">Equity</div></div>
+    <div class="rev-card"><div class="rev-top"><div class="rev-av" style="background:rgba(0,87,255,0.15);color:#6b8fff;">PL</div><div><div class="rev-name">Priya L.</div><div class="rev-role">Data Eng @ Databricks · CS '24</div></div></div><div class="rev-text">"Added my €800/month student loan and it completely changed the math. The take-home calculator is the feature I didn't know I needed."</div><div class="rev-tag">Loans</div></div>
+    <div class="rev-card"><div class="rev-top"><div class="rev-av" style="background:rgba(255,77,28,0.15);color:var(--orange);">DW</div><div><div class="rev-name">Dev W.</div><div class="rev-role">Infra Eng @ Cloudflare · CS '25</div></div></div><div class="rev-text">"Levels.fyi made me feel dumb. OfferGrad just explained it clearly. Picked the offer with better RSU upside. Up 40% so far."</div><div class="rev-tag">Equity Upside</div></div>
+    <div class="rev-card"><div class="rev-top"><div class="rev-av" style="background:rgba(212,255,0,0.12);color:var(--lime);">AK</div><div><div class="rev-name">Anya K.</div><div class="rev-role">SWE @ Airbnb · CS '24</div></div></div><div class="rev-text">"Chose a $12k lower salary. OfferGrad showed Austin COL made it $18k MORE in real money. Best career decision I've ever made."</div><div class="rev-tag">Cost of Living</div></div>
+    <div class="rev-card"><div class="rev-top"><div class="rev-av" style="background:rgba(0,87,255,0.15);color:#6b8fff;">MR</div><div><div class="rev-name">Marcus R.</div><div class="rev-role">ML Eng @ OpenAI · CS '25</div></div></div><div class="rev-text">"The resume impact score is genius. My 'lower' offer was way better for the next job hop. Used it to negotiate $15k more."</div><div class="rev-tag">Resume Score</div></div>
+  </div>
+</section>
+
+<section class="how" id="how">
+  <div>
+    <div class="how-label">// Process</div>
+    <div class="how-title">HOW<br/>IT<br/>WORKS</div>
+  </div>
+  <div class="how-steps">
+    <div class="how-step">
+      <div class="step-num">01</div>
+      <div class="step-body"><div class="step-title">Enter your offers</div><div class="step-desc">Company, role, city, salary, signing bonus, equity, bonus %. Works for any country, any currency. Takes 2 minutes.</div></div>
+    </div>
+    <div class="how-step">
+      <div class="step-num">02</div>
+      <div class="step-body"><div class="step-title">Tell us your situation</div><div class="step-desc">Student loans, rent budget, tax rate, career goals. The stuff other tools ignore. This is where we get specific to you.</div></div>
+    </div>
+    <div class="how-step">
+      <div class="step-num">03</div>
+      <div class="step-body"><div class="step-title">Set your priorities</div><div class="step-desc">Drag sliders to weight salary vs equity vs career growth vs stability. Your priorities change the winner — not ours.</div></div>
+    </div>
+    <div class="how-step">
+      <div class="step-num">04</div>
+      <div class="step-body"><div class="step-title">Get a verdict</div><div class="step-desc">Full breakdown: COL-adjusted salary, monthly take-home after loans, resume impact score, equity analysis, real talk summary. No vague advice.</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="cta">
+  <div class="cta-title">STOP<br/>GUESS<br/><span class="lime">ING.</span></div>
+  <div class="cta-right">
+    <p class="cta-desc">You worked hard for these offers. Don't leave money on the table because you didn't have the right tool. Takes 3 minutes. Completely free.</p>
+    <a href="app.html" class="cta-btn">Compare my offers <span style="font-size:18px;">→</span></a>
+    <div class="cta-note">// No account needed · No credit card · Free forever</div>
+  </div>
+</section>
+
+<footer>
+  <div class="foot-logo">Offer<em>Grad</em></div>
+  <div class="foot-copy">© 2026 — Built by a CS student, for CS students worldwide.</div>
+</footer>
+
+<script>
+// cursor
+const cur=document.getElementById('cur'),cur2=document.getElementById('cur2');
+let mx=0,my=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=(mx-5)+'px';cur.style.top=(my-5)+'px';cur2.style.left=(mx-18)+'px';cur2.style.top=(my-18)+'px';});
+
+// nav
+window.addEventListener('scroll',()=>document.getElementById('nav').classList.toggle('stuck',scrollY>40));
+
+// counters
+function cnt(el,t,suf,dur){let s=0,step=t/60;const tm=setInterval(()=>{s+=step;if(s>=t){s=t;clearInterval(tm);}el.textContent=Math.floor(s).toLocaleString()+suf;},dur/60);}
+setTimeout(()=>{cnt(document.getElementById('c1'),14200,'',1200);cnt(document.getElementById('c2'),8400,'',1400);cnt(document.getElementById('c3'),30,'',800);cnt(document.getElementById('c4'),22,'',600);},400);
+
+// terminal score bar
+setTimeout(()=>{document.getElementById('tsf').style.width='91%';},800);
+
+// scroll reveal
+const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.style.opacity='1';}),{threshold:0.1});
+document.querySelectorAll('.feat,.how-step,.rev-card').forEach(el=>{el.style.opacity='0';el.style.transition='opacity 0.6s ease';obs.observe(el);});
+</script>
+</body>
+</html>

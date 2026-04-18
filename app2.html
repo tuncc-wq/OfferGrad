@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>OfferGrad — Compare Your Offers</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Playfair+Display:ital,wght@1,400&display=swap" rel="stylesheet"/>
+<style>
+:root{--black:#050505;--bg2:#0d0d0d;--bg3:#141414;--bg4:#1c1c1c;--white:#f0ede6;--lime:#d4ff00;--lime2:#b8e000;--orange:#ff4d1c;--blue:#0057ff;--border:#1a1a1a;--border2:#252525;--muted:rgba(240,237,230,0.4);}
+*{box-sizing:border-box;margin:0;padding:0;}
+::selection{background:var(--lime);color:#000;}
+body{background:var(--black);color:var(--white);font-family:'DM Mono',monospace;min-height:100vh;cursor:none;}
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:9997;opacity:0.5;}
+#cur{position:fixed;width:10px;height:10px;background:var(--lime);border-radius:50%;pointer-events:none;z-index:9999;}
+#cur2{position:fixed;width:32px;height:32px;border:1px solid rgba(212,255,0,0.3);border-radius:50%;pointer-events:none;z-index:9998;transition:left 0.1s,top 0.1s;}
+
+/* TOPBAR */
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:0 2.5rem;height:60px;border-bottom:1px solid var(--border);background:rgba(5,5,5,0.97);backdrop-filter:blur(20px);position:sticky;top:0;z-index:50;}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--white);text-decoration:none;}
+.logo em{color:var(--lime);font-style:normal;}
+.steps-bar{display:flex;align-items:center;gap:0;}
+.sbar-step{display:flex;align-items:center;gap:8px;padding:0 16px;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(240,237,230,0.25);transition:color 0.3s;}
+.sbar-step.active{color:var(--lime);}
+.sbar-step.done{color:rgba(240,237,230,0.5);}
+.sbar-num{width:22px;height:22px;border:1px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;}
+.sbar-div{width:30px;height:1px;background:var(--border2);}
+
+/* LAYOUT */
+.app{max-width:1200px;margin:0 auto;padding:3rem 2rem;}
+
+/* STEP HEADERS */
+.sh{margin-bottom:3rem;}
+.sh-tag{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--lime);margin-bottom:1rem;display:flex;align-items:center;gap:8px;}
+.sh-tag::before{content:'//';color:rgba(212,255,0,0.4);}
+.sh-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,7vw,80px);line-height:0.9;letter-spacing:1px;margin-bottom:0.75rem;}
+.sh-title em{font-family:'Playfair Display',serif;font-style:italic;color:rgba(240,237,230,0.35);font-size:0.7em;}
+.sh-sub{font-size:12px;font-weight:300;color:var(--muted);font-style:italic;}
+
+/* VIEWS */
+.view{display:none;animation:fIn 0.35s ease;}
+.view.active{display:block;}
+@keyframes fIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+/* CURRENCY BAR */
+.cbar{background:var(--bg2);border:1px solid var(--border2);padding:1rem 1.5rem;margin-bottom:2rem;display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;}
+.cbar-label{font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);white-space:nowrap;}
+.csel{background:var(--bg3);border:1px solid var(--border2);padding:9px 14px;color:var(--white);font-family:'DM Mono',monospace;font-size:12px;min-width:280px;cursor:none;}
+.csel:focus{outline:1px solid var(--lime);}
+
+/* OFFER GRID */
+.ogrid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);margin-bottom:1px;}
+.ocard{background:var(--bg2);padding:0;}
+.ohead{padding:1.25rem 1.75rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;background:var(--bg3);}
+.olett{width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:18px;flex-shrink:0;}
+.olett.a{background:var(--lime);color:#000;}
+.olett.b{background:rgba(0,87,255,0.8);color:#fff;}
+.otitle{font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;}
+.obody{padding:1.75rem;}
+
+/* FORM */
+.fg{margin-bottom:18px;}
+.fg label{display:block;font-size:9px;font-weight:400;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:7px;}
+.fg input,.fg select{width:100%;background:var(--bg3);border:none;border-bottom:1px solid var(--border2);padding:10px 12px;color:var(--white);font-family:'DM Mono',monospace;font-size:12px;transition:border-color 0.2s;-webkit-appearance:none;outline:none;}
+.fg input:focus,.fg select:focus{border-color:var(--lime);}
+.fg input::placeholder{color:rgba(240,237,230,0.18);}
+.fg select option{background:var(--bg3);}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.ip{position:relative;}
+.ip .pfx{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:rgba(240,237,230,0.3);font-size:11px;pointer-events:none;}
+.ip input{padding-left:22px;}
+
+/* RANGE SLIDER */
+.range-wrap{display:flex;align-items:center;gap:12px;margin-top:4px;}
+.range-wrap input[type=range]{flex:1;-webkit-appearance:none;height:2px;background:var(--border2);outline:none;cursor:none;}
+.range-wrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:var(--lime);cursor:none;}
+.range-val{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--lime);min-width:24px;text-align:right;line-height:1;}
+.range-hints{display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:4px;}
+
+/* CONTEXT */
+.ctx-block{background:var(--bg2);border:1px solid var(--border);margin-bottom:1px;}
+.ctx-head{padding:1rem 1.75rem;border-bottom:1px solid var(--border);background:var(--bg3);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);}
+.ctx-body{padding:1.75rem;}
+.ctx-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+
+/* PRIORITIES */
+.pri-block{background:var(--bg2);border:1px solid var(--border);margin-bottom:2rem;}
+.pri-head{padding:1rem 1.75rem;border-bottom:1px solid var(--border);background:var(--bg3);}
+.pri-head-title{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);}
+.pri-body{padding:1rem 0;}
+.pri-row{display:grid;grid-template-columns:200px 1fr auto;gap:2rem;align-items:center;padding:1rem 1.75rem;border-bottom:1px solid var(--border);transition:background 0.2s;}
+.pri-row:last-child{border-bottom:none;}
+.pri-row:hover{background:rgba(212,255,0,0.02);}
+.pri-lbl{font-size:12px;font-weight:500;}
+.pri-desc{font-size:10px;color:var(--muted);margin-top:2px;font-style:italic;}
+.pri-num{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--lime);min-width:32px;text-align:right;line-height:1;}
+
+/* NAV BTNS */
+.nav-btns{display:flex;justify-content:space-between;align-items:center;padding:2rem 0;margin-top:0.5rem;border-top:1px solid var(--border);}
+.btn-back{padding:12px 28px;background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;cursor:none;transition:all 0.2s;}
+.btn-back:hover{border-color:rgba(240,237,230,0.4);color:var(--white);}
+.btn-next{padding:14px 40px;background:var(--lime);color:#000;font-family:'DM Mono',monospace;font-size:12px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;border:none;cursor:none;transition:all 0.2s;}
+.btn-next:hover{background:var(--white);transform:translate(-2px,-2px);}
+
+/* ===== RESULTS ===== */
+.res-winner{background:var(--bg2);border:1px solid rgba(212,255,0,0.25);padding:3rem;margin-bottom:1px;position:relative;overflow:hidden;}
+.res-winner::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 100% at 50% 0%,rgba(212,255,0,0.07) 0%,transparent 70%);}
+.rw-tag{font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--lime);margin-bottom:1rem;display:flex;align-items:center;gap:8px;position:relative;}
+.rw-name{font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,8vw,96px);line-height:0.88;letter-spacing:1px;position:relative;margin-bottom:0.5rem;}
+.rw-sub{font-size:12px;color:var(--muted);font-style:italic;position:relative;}
+
+/* SCORE GRID */
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);margin-bottom:1px;}
+.scard{background:var(--bg2);padding:2rem;}
+.scard.wc{background:rgba(212,255,0,0.04);}
+.sc-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border);}
+.sc-co{font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+.sc-role{font-size:16px;font-weight:500;line-height:1.2;}
+.sc-loc{font-size:10px;color:var(--muted);margin-top:3px;font-style:italic;}
+.sc-score-wrap{text-align:right;}
+.sc-score-n{font-family:'Bebas Neue',sans-serif;font-size:56px;line-height:0.9;}
+.sc-score-l{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);}
+.mlist{display:flex;flex-direction:column;}
+.mi{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(240,237,230,0.04);}
+.mi:last-child{border-bottom:none;}
+.mn{font-size:11px;color:var(--muted);}
+.mv{font-size:11px;font-weight:500;}
+.good{color:var(--lime);}.bad{color:var(--orange);}.neu{color:var(--white);}
+
+/* BAR CHART */
+.bchrt{background:var(--bg2);border:1px solid var(--border);padding:2rem;margin-bottom:1px;}
+.bchrt-title{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:1px;margin-bottom:1.75rem;color:rgba(240,237,230,0.7);}
+.cbars{display:flex;flex-direction:column;gap:16px;}
+.blbl{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:6px;}
+.btrack{height:28px;background:var(--bg4);overflow:hidden;}
+.bfa{background:var(--lime);height:100%;display:flex;align-items:center;padding-left:10px;font-size:10px;font-weight:500;color:#000;min-width:0;overflow:hidden;white-space:nowrap;transition:width 1.2s cubic-bezier(0.16,1,0.3,1);}
+.bfb{background:rgba(0,87,255,0.8);height:100%;display:flex;align-items:center;padding-left:10px;font-size:10px;font-weight:500;color:#fff;min-width:0;overflow:hidden;white-space:nowrap;transition:width 1.2s cubic-bezier(0.16,1,0.3,1);}
+
+/* REAL TALK */
+.rtalk{background:var(--bg3);border:1px solid var(--border2);border-left:3px solid var(--orange);padding:2rem;margin-bottom:1px;}
+.rth{display:flex;align-items:center;gap:12px;margin-bottom:1rem;}
+.rtbdg{padding:4px 10px;background:var(--orange);color:#fff;font-size:9px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;}
+.rttitle{font-size:13px;font-weight:500;}
+.rttext{font-size:12px;color:rgba(240,237,230,0.65);font-weight:300;line-height:1.9;font-style:italic;}
+.rttext strong{color:var(--white);font-weight:500;font-style:normal;}
+
+/* BREAKDOWN */
+.bds{margin-bottom:1px;}
+.bd-title{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:1px;color:rgba(240,237,230,0.5);padding:1.5rem 0 1rem;}
+.bdi{background:var(--bg2);border-bottom:1px solid var(--border);padding:1.25rem 1.5rem;display:grid;grid-template-columns:44px 1fr auto;gap:1rem;align-items:flex-start;transition:background 0.2s;}
+.bdi:hover{background:var(--bg3);}
+.bdic{width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;background:var(--bg4);}
+.bdlbl{font-size:12px;font-weight:500;margin-bottom:3px;}
+.bddesc{font-size:11px;color:var(--muted);font-weight:300;line-height:1.7;}
+.bdw{font-size:9px;font-weight:500;padding:4px 10px;letter-spacing:0.08em;text-transform:uppercase;align-self:flex-start;margin-top:2px;white-space:nowrap;}
+.bwa{background:rgba(212,255,0,0.15);color:var(--lime);}
+.bwb{background:rgba(0,87,255,0.15);color:#6b8fff;}
+
+/* RBAR */
+.rbar{display:flex;justify-content:center;gap:1rem;padding:2.5rem 0;border-top:1px solid var(--border);}
+.btn-rst{padding:13px 28px;background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;cursor:none;transition:all 0.2s;}
+.btn-rst:hover{border-color:rgba(240,237,230,0.4);color:var(--white);}
+.btn-shr{padding:13px 28px;background:var(--lime);color:#000;font-family:'DM Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;border:none;cursor:none;transition:all 0.2s;}
+.btn-shr:hover{background:var(--white);}
+
+/* NEGOTIATION TIPS */
+.neg-section{background:var(--bg2);border:1px solid var(--border);margin-bottom:1px;}
+.neg-head{padding:1rem 1.5rem;border-bottom:1px solid var(--border);background:var(--bg3);display:flex;align-items:center;gap:10px;}
+.neg-badge{padding:3px 8px;background:rgba(212,255,0,0.15);color:var(--lime);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;}
+.neg-title{font-size:11px;font-weight:500;letter-spacing:0.05em;}
+.neg-body{padding:1.5rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.neg-tip{padding:1rem;background:var(--bg4);border-left:2px solid var(--lime);}
+.neg-tip-title{font-size:11px;font-weight:500;margin-bottom:6px;color:var(--lime);}
+.neg-tip-text{font-size:11px;color:var(--muted);line-height:1.7;font-weight:300;}
+
+@media(max-width:768px){
+  .ogrid,.sgrid,.ctx-grid,.neg-body{grid-template-columns:1fr;}
+  .fg2{grid-template-columns:1fr;}
+  .topbar{padding:0 1rem;}
+  .app{padding:2rem 1rem;}
+  .bdi{grid-template-columns:36px 1fr;}
+  .bdw{display:none;}
+  .pri-row{grid-template-columns:140px 1fr auto;gap:1rem;}
+  .steps-bar{display:none;}
+}
+</style>
+</head>
+<body>
+<div id="cur"></div>
+<div id="cur2"></div>
+
+<div class="topbar">
+  <a href="index.html" class="logo">Offer<em>Grad</em></a>
+  <div class="steps-bar">
+    <div class="sbar-step active" id="sb1"><div class="sbar-num">1</div><span>Offers</span></div>
+    <div class="sbar-div"></div>
+    <div class="sbar-step" id="sb2"><div class="sbar-num">2</div><span>Context</span></div>
+    <div class="sbar-div"></div>
+    <div class="sbar-step" id="sb3"><div class="sbar-num">3</div><span>Results</span></div>
+  </div>
+</div>
+
+<div class="app">
+
+<!-- STEP 1 -->
+<div class="view active" id="step1">
+  <div class="sh">
+    <div class="sh-tag">Step 1 of 3</div>
+    <div class="sh-title">YOUR OFFERS <em>decoded</em></div>
+    <div class="sh-sub">Works anywhere. Any currency, any city, any country.</div>
+  </div>
+
+  <div class="cbar">
+    <span class="cbar-label">Currency</span>
+    <select class="csel" id="curr" onchange="updateCurr()">
+      <option value="USD|$">🇺🇸 USD — US Dollar ($)</option>
+      <option value="EUR|€">🇪🇺 EUR — Euro (€)</option>
+      <option value="GBP|£">🇬🇧 GBP — British Pound (£)</option>
+      <option value="TRY|₺">🇹🇷 TRY — Turkish Lira (₺)</option>
+      <option value="INR|₹">🇮🇳 INR — Indian Rupee (₹)</option>
+      <option value="CAD|CA$">🇨🇦 CAD — Canadian Dollar</option>
+      <option value="AUD|A$">🇦🇺 AUD — Australian Dollar</option>
+      <option value="SGD|S$">🇸🇬 SGD — Singapore Dollar</option>
+      <option value="JPY|¥">🇯🇵 JPY — Japanese Yen (¥)</option>
+      <option value="KRW|₩">🇰🇷 KRW — Korean Won (₩)</option>
+      <option value="BRL|R$">🇧🇷 BRL — Brazilian Real</option>
+      <option value="MXN|MX$">🇲🇽 MXN — Mexican Peso</option>
+      <option value="AED|AED">🇦🇪 AED — UAE Dirham</option>
+      <option value="CHF|CHF">🇨🇭 CHF — Swiss Franc</option>
+      <option value="SEK|kr">🇸🇪 SEK — Swedish Krona</option>
+      <option value="PLN|zł">🇵🇱 PLN — Polish Zloty</option>
+      <option value="CZK|Kč">🇨🇿 CZK — Czech Koruna</option>
+      <option value="HUF|Ft">🇭🇺 HUF — Hungarian Forint</option>
+      <option value="RON|lei">🇷🇴 RON — Romanian Leu</option>
+      <option value="ZAR|R">🇿🇦 ZAR — South African Rand</option>
+      <option value="NGN|₦">🇳🇬 NGN — Nigerian Naira</option>
+      <option value="OTHER|$">🌍 Other</option>
+    </select>
+  </div>
+
+  <div class="ogrid">
+    <div class="ocard">
+      <div class="ohead"><div class="olett a">A</div><div class="otitle">Offer A</div></div>
+      <div class="obody">
+        <div class="fg"><label>Company Name</label><input type="text" id="a-co" placeholder="e.g. Google, Trendyol, Infosys"/></div>
+        <div class="fg"><label>Role / Title</label><input type="text" id="a-role" placeholder="e.g. Software Engineer"/></div>
+        <div class="fg2">
+          <div class="fg"><label>City</label><input type="text" id="a-city" placeholder="Istanbul, NYC..."/></div>
+          <div class="fg"><label>Country</label><input type="text" id="a-country" placeholder="Turkey, USA..."/></div>
+        </div>
+        <div class="fg">
+          <label>City Cost of Living</label>
+          <div class="range-wrap">
+            <input type="range" id="a-col" min="1" max="10" value="5" oninput="document.getElementById('acolv').textContent=this.value"/>
+            <span id="acolv" class="range-val">5</span>
+          </div>
+          <div class="range-hints"><span>1 = Very cheap</span><span>5 = Average</span><span>10 = NYC/Zurich</span></div>
+        </div>
+        <div class="fg2">
+          <div class="fg"><label>Base Salary / yr</label><div class="ip"><span class="pfx sym">$</span><input type="number" id="a-sal" placeholder="120000"/></div></div>
+          <div class="fg"><label>Signing Bonus</label><div class="ip"><span class="pfx sym">$</span><input type="number" id="a-sign" placeholder="0"/></div></div>
+        </div>
+        <div class="fg2">
+          <div class="fg"><label>Total Equity / Stock</label><div class="ip"><span class="pfx sym">$</span><input type="number" id="a-rsu" placeholder="0"/></div></div>
+          <div class="fg"><label>Annual Bonus %</label><input type="number" id="a-bon" placeholder="0"/></div>
+        </div>
+        <div class="fg"><label>Company Type</label>
+          <select id="a-type">
+            <option value="faang">FAANG / Big Tech</option>
+            <option value="unicorn">Unicorn / Late-stage startup</option>
+            <option value="growth">Growth Startup (Series B+)</option>
+            <option value="early">Early Startup (Seed/A)</option>
+            <option value="mid">Mid-size Tech</option>
+            <option value="finance">Finance / Banking</option>
+            <option value="consulting">Consulting</option>
+            <option value="govt">Government / Public sector</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="fg"><label>Remote Policy</label>
+          <select id="a-rem"><option value="office">In-office</option><option value="hybrid">Hybrid</option><option value="remote">Fully Remote</option></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="ocard">
+      <div class="ohead"><div class="olett b">B</div><div class="otitle">Offer B</div></div>
+      <div class="obody">
+        <div class="fg"><label>Company Name</label><input type="text" id="b-co" placeholder="e.g. Stripe, Getir, Wipro"/></div>
+        <div class="fg"><label>Role / Title</label><input type="text" id="b-role" placeholder="e.g. Software Engineer"/></div>
+        <div class="fg2">
+          <div class="fg"><label>City</label><input type="text" id="b-city" placeholder="Berlin, Mumbai..."/></div>
+          <div class="fg"><label>Country</label><input type="text" id="b-country" placeholder="Germany, India..."/></div>
+        </div>
+        <div class="fg">
+          <label>City Cost of Living</label>
+          <div class="range-wrap">
+            <input type="range" id="b-col" min="1" max="10" value="5" oninput="document.getElementById('bcolv').textContent=this.value"/>
+            <span id="bcolv" class="range-val" style="color:#6b8fff">5</span>
+          </div>
+          <div class="range-hints"><span>1 = Very cheap</span><span>5 = Average</span><span>10 = NYC/Zurich</span></div>
+        </div>
+        <div class="fg2">
+          <div class="fg"><label>Base Salary / yr</label><div class="ip"><span class="pfx sym">$</span><input type="number" id="b-sal" placeholder="105000"/></div></div>
+          <div class="fg"><label>Signing Bonus</label><div class="ip"><span class="pfx sym">$</span><input type="number" id="b-sign" placeholder="0"/></div></div>
+        </div>
+        <div class="fg2">
+          <div class="fg"><label>Total Equity / Stock</label><div class="ip"><span class="pfx sym">$</span><input type="number" id="b-rsu" placeholder="0"/></div></div>
+          <div class="fg"><label>Annual Bonus %</label><input type="number" id="b-bon" placeholder="0"/></div>
+        </div>
+        <div class="fg"><label>Company Type</label>
+          <select id="b-type">
+            <option value="faang">FAANG / Big Tech</option>
+            <option value="unicorn">Unicorn / Late-stage startup</option>
+            <option value="growth">Growth Startup (Series B+)</option>
+            <option value="early">Early Startup (Seed/A)</option>
+            <option value="mid">Mid-size Tech</option>
+            <option value="finance">Finance / Banking</option>
+            <option value="consulting">Consulting</option>
+            <option value="govt">Government / Public sector</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="fg"><label>Remote Policy</label>
+          <select id="b-rem"><option value="office">In-office</option><option value="hybrid">Hybrid</option><option value="remote">Fully Remote</option></select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-btns"><div></div><button class="btn-next" onclick="go(2)">Next: Your Context →</button></div>
+</div>
+
+<!-- STEP 2 -->
+<div class="view" id="step2">
+  <div class="sh">
+    <div class="sh-tag">Step 2 of 3</div>
+    <div class="sh-title">YOUR LIFE <em>matters</em></div>
+    <div class="sh-sub">This is where we get specific. No other tool asks these questions.</div>
+  </div>
+
+  <div class="ctx-block">
+    <div class="ctx-head">// Financial context</div>
+    <div class="ctx-body">
+      <div class="ctx-grid">
+        <div class="fg"><label>Monthly Loan / Debt Payment</label><div class="ip"><span class="pfx sym">$</span><input type="number" id="c-loans" placeholder="0"/></div></div>
+        <div class="fg"><label>Monthly Rent Budget</label><div class="ip"><span class="pfx sym">$</span><input type="number" id="c-rent" placeholder="0"/></div></div>
+        <div class="fg"><label>Estimated Tax Rate</label>
+          <select id="c-tax">
+            <option value="0">0% — Tax-free (UAE, Bahrain etc.)</option>
+            <option value="0.10">~10% — Very low</option>
+            <option value="0.15">~15% — Low</option>
+            <option value="0.20">~20% — Turkey / Eastern Europe</option>
+            <option value="0.22" selected>~22% — US moderate</option>
+            <option value="0.28">~28% — UK moderate-high</option>
+            <option value="0.33">~33% — France / higher</option>
+            <option value="0.38">~38% — Germany / Denmark</option>
+            <option value="0.45">~45% — Top brackets</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ctx-block" style="margin-bottom:1px;">
+    <div class="ctx-head">// Career goals</div>
+    <div class="ctx-body">
+      <div class="ctx-grid">
+        <div class="fg"><label>Where in 2 years?</label>
+          <select id="c-goal">
+            <option value="startup">Founding / joining a startup</option>
+            <option value="bigger">Moving to a bigger company</option>
+            <option value="grow">Growing at same company</option>
+            <option value="grad">Going to grad school</option>
+            <option value="unsure">Not sure yet</option>
+          </select>
+        </div>
+        <div class="fg"><label>What matters most now?</label>
+          <select id="c-pri">
+            <option value="money">Maximizing income</option>
+            <option value="career">Career growth / resume</option>
+            <option value="wlb">Work-life balance</option>
+            <option value="learn">Learning &amp; mentorship</option>
+            <option value="stable">Job stability</option>
+          </select>
+        </div>
+        <div class="fg"><label>How long do you plan to stay?</label>
+          <select id="c-ten">
+            <option value="1">~1 year</option>
+            <option value="2" selected>~2 years (typical)</option>
+            <option value="4">~4 years (full vest)</option>
+            <option value="5">5+ years</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pri-block">
+    <div class="pri-head">
+      <div class="pri-head-title">// Priority weights — drag sliders. This directly changes who wins.</div>
+    </div>
+    <div class="pri-body">
+      <div class="pri-row">
+        <div><div class="pri-lbl">Base Salary</div><div class="pri-desc">Monthly cash, debt payoff speed</div></div>
+        <div class="range-wrap"><input type="range" min="1" max="10" value="7" oninput="wu('sal',this.value)"/></div>
+        <div class="pri-num" id="wv-sal">7</div>
+      </div>
+      <div class="pri-row">
+        <div><div class="pri-lbl">Equity / Stock</div><div class="pri-desc">Long-term wealth building</div></div>
+        <div class="range-wrap"><input type="range" min="1" max="10" value="5" oninput="wu('eq',this.value)"/></div>
+        <div class="pri-num" id="wv-eq">5</div>
+      </div>
+      <div class="pri-row">
+        <div><div class="pri-lbl">Resume Impact</div><div class="pri-desc">Next job leverage, brand name</div></div>
+        <div class="range-wrap"><input type="range" min="1" max="10" value="8" oninput="wu('res',this.value)"/></div>
+        <div class="pri-num" id="wv-res">8</div>
+      </div>
+      <div class="pri-row">
+        <div><div class="pri-lbl">Work-Life Balance</div><div class="pri-desc">Remote work, culture, hours</div></div>
+        <div class="range-wrap"><input type="range" min="1" max="10" value="5" oninput="wu('wlb',this.value)"/></div>
+        <div class="pri-num" id="wv-wlb">5</div>
+      </div>
+      <div class="pri-row">
+        <div><div class="pri-lbl">Job Stability</div><div class="pri-desc">Layoff risk, company health</div></div>
+        <div class="range-wrap"><input type="range" min="1" max="10" value="4" oninput="wu('stb',this.value)"/></div>
+        <div class="pri-num" id="wv-stb">4</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-btns"><button class="btn-back" onclick="go(1)">← Back</button><button class="btn-next" onclick="calc()">Get My Results →</button></div>
+</div>
+
+<!-- STEP 3 -->
+<div class="view" id="step3">
+  <div id="res"></div>
+  <div class="rbar"><button class="btn-rst" onclick="go(1)">← Start Over</button><button class="btn-shr" onclick="shr()">Share Results ↗</button></div>
+</div>
+
+</div>
+
+<script>
+// cursor
+const cur=document.getElementById('cur'),cur2=document.getElementById('cur2');
+document.addEventListener('mousemove',e=>{cur.style.left=(e.clientX-5)+'px';cur.style.top=(e.clientY-5)+'px';cur2.style.left=(e.clientX-16)+'px';cur2.style.top=(e.clientY-16)+'px';});
+
+let sym='$';
+let W={sal:7,eq:5,res:8,wlb:5,stb:4};
+const RES={faang:9.5,unicorn:8.5,finance:9,growth:8,mid:7,consulting:7.5,early:6.5,govt:6,other:5.5};
+const STB={faang:8,unicorn:7,finance:9,mid:7,consulting:8,growth:5,early:3,govt:9,other:5};
+const WLB={remote:9,hybrid:7,office:5};
+const TYPELAB={faang:'Top-tier brand — opens every door',unicorn:'High-growth company — strong story',growth:'Growth startup — solid trajectory',early:'Early startup — high risk, great story',mid:'Mid-size tech — solid, less prestige',finance:'Finance — highly stable, premium brand',consulting:'Consulting — good brand, lateral moves',govt:'Government — very stable, limited signal',other:'Company — moderate career signal'};
+const STBLAB={faang:'Very stable — large reserves',unicorn:'Generally stable',finance:'Extremely stable — regulated industry',mid:'Generally stable',consulting:'Generally stable',growth:'Moderate risk',early:'High risk — could fold in 18 months',govt:'Very stable — public sector security',other:'Stability unknown'};
+
+function updateCurr(){const v=document.getElementById('curr').value.split('|');sym=v[1]||v[0];document.querySelectorAll('.sym').forEach(e=>e.textContent=sym);}
+function wu(k,v){W[k]=+v;document.getElementById('wv-'+k).textContent=v;}
+function gv(id){return document.getElementById(id);}
+function nv(id){return parseFloat(gv(id).value)||0;}
+function sv(id){return gv(id).value||'';}
+function fmt(v){const a=Math.abs(v);if(a>=1000000)return sym+Math.round(a/1000000)+'M';if(a>=1000)return sym+Math.round(a/1000)+'k';return sym+Math.round(a).toLocaleString();}
+function fmtF(v){return sym+Math.round(v).toLocaleString();}
+function loc(o){return[o.city,o.country].filter(Boolean).join(', ')||'—';}
+
+function met(o,loans,rent,tax){
+  const cf=5/o.col;const ca=Math.round(o.sal*cf);
+  const bn=o.sal*(o.bon/100);const ry=o.rsu/4;
+  const yr1=o.sal+o.sign+ry+bn;
+  const nm=Math.round((o.sal/12)*(1-tax));
+  const al=nm-loans;const ar=al-rent;
+  return{ca,yr1,nm,al,ar,ry,bn,res:RES[o.type]||6,stb:STB[o.type]||5,wlb:WLB[o.rem]||5};
+}
+
+function sc(o,m){
+  const sn=Math.min(10,m.ca/50000*5);const en=o.rsu>0?Math.min(10,o.rsu/500000*10):0;
+  const s=sn*W.sal+en*W.eq+m.res*W.res+m.wlb*W.wlb+m.stb*W.stb;
+  const mx=10*(W.sal+W.eq+W.res+W.wlb+W.stb);return Math.round(s/mx*100);
+}
+
+function go(n){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  gv('step'+n).classList.add('active');
+  ['sb1','sb2','sb3'].forEach((id,i)=>{
+    const el=gv(id);el.classList.remove('active','done');
+    if(i===n-1)el.classList.add('active');
+    else if(i<n-1)el.classList.add('done');
+  });
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function negTips(wo,lo,ma,mb,win){
+  const wm=win==='A'?ma:mb,lm=win==='A'?mb:ma;
+  const diff=Math.abs(wm.al-lm.al);
+  const tips=[
+    {t:'Lead with competing offers',b:`You have ${lo.co} as leverage. Even if you prefer ${wo.co}, mention the competing offer. Most companies will match or beat it rather than lose a candidate.`},
+    {t:'Negotiate the signing bonus first',b:`Signing bonuses are easier to increase than base salary. Ask for an extra ${fmt(wm.nm*2)} to bridge the gap between offers. Companies have more flexibility here.`},
+    {t:'Ask for an equity refresh schedule',b:`Request details on when the next equity refresh cycle is. Many companies grant additional RSUs after Year 1 performance review — this is rarely in the offer letter.`},
+    {t:`The $${diff>0?fmtF(diff):fmtF(500)} monthly gap argument`,b:`Show your math: "${lo.co} pays ${fmtF(lm.al)}/month take-home. To accept ${wo.co}, I'd need ${fmtF(wm.al+diff)}/month." This is a concrete, reasonable ask.`},
+  ];
+  return tips.map(t=>`<div class="neg-tip"><div class="neg-tip-title">${t.t}</div><div class="neg-tip-text">${t.b}</div></div>`).join('');
+}
+
+function calc(){
+  const a={co:sv('a-co')||'Offer A',role:sv('a-role')||'Engineer',city:sv('a-city'),country:sv('a-country'),col:+gv('a-col').value||5,sal:nv('a-sal'),sign:nv('a-sign'),rsu:nv('a-rsu'),bon:nv('a-bon'),type:sv('a-type'),rem:sv('a-rem')};
+  const b={co:sv('b-co')||'Offer B',role:sv('b-role')||'Engineer',city:sv('b-city'),country:sv('b-country'),col:+gv('b-col').value||5,sal:nv('b-sal'),sign:nv('b-sign'),rsu:nv('b-rsu'),bon:nv('b-bon'),type:sv('b-type'),rem:sv('b-rem')};
+  const loans=nv('c-loans'),rent=nv('c-rent'),tax=parseFloat(sv('c-tax'))||0.22,goal=sv('c-goal');
+  const ma=met(a,loans,rent,tax),mb=met(b,loans,rent,tax);
+  const sA=sc(a,ma),sB=sc(b,mb);
+  const win=sA>=sB?'A':'B';
+  const wo=win==='A'?a:b,wm=win==='A'?ma:mb,lo=win==='A'?b:a,lm=win==='A'?mb:ma,ws=win==='A'?sA:sB,ls=win==='A'?sB:sA;
+  const mx=Math.max(ma.yr1,mb.yr1)||1;
+
+  // real talk
+  let rt=`<strong>${wo.co} is the stronger offer</strong> for your specific situation. `;
+  const cd=Math.abs(wm.ca-lm.ca);
+  if(cd>0)rt+=`After adjusting for cost of living, <strong>${wo.co} is worth ${fmtF(cd)} more per year</strong> in real purchasing power — the raw salary comparison is misleading. `;
+  if(loans>0)rt+=`With your <strong>${fmtF(loans)}/month in debt payments</strong>, ${wo.co} gives you <strong>${fmtF(wm.al)}/month</strong> vs ${fmtF(lm.al)}/month at ${lo.co}. That's ${fmtF(Math.abs(wm.al-lm.al))} more every single month — ${fmtF(Math.abs(wm.al-lm.al)*12)} per year. `;
+  if(goal==='startup')rt+=`Since you're thinking about startups in 2 years, <strong>${ma.res>=mb.res?a.co:b.co}'s name on your resume</strong> will open significantly more doors with founders and VCs. `;
+  else if(goal==='bigger')rt+=`For moving to a larger company later, <strong>resume brand is critical</strong> — ${ma.res>=mb.res?a.co:b.co} gives you the stronger credential. `;
+  const mr=Math.max(a.rsu,b.rsu);
+  if(mr>0){const ew=a.rsu>b.rsu?a:b;rt+=`On equity, <strong>${ew.co}'s ${fmtF(ew.rsu)} total (${fmtF(ew.rsu/4)}/year)</strong> is the bigger long-term bet — but remember: stock prices move both directions. `;}
+  if(wm.wlb>lm.wlb)rt+=`The ${wo.rem==='remote'?'fully remote':'hybrid'} policy at ${wo.co} is also meaningfully better for work-life balance. `;
+  rt+=`<strong>Bottom line: ${wo.co} wins by ${ws-ls} points.</strong> Unless you have a strong personal reason to prefer ${lo.co}, the math is clear.`;
+
+  const cats=[
+    {ic:'💰',lb:'Purchasing Power (COL-Adjusted)',dA:`${fmtF(ma.ca)}/yr in ${a.city||a.country||'your city'}`,dB:`${fmtF(mb.ca)}/yr in ${b.city||b.country||'your city'}`,wA:ma.ca>=mb.ca},
+    {ic:'📈',lb:'Total Equity & Stock',dA:a.rsu>0?`${fmtF(a.rsu)} total · ${fmtF(a.rsu/4)}/yr · 4yr vest`:'No equity offered',dB:b.rsu>0?`${fmtF(b.rsu)} total · ${fmtF(b.rsu/4)}/yr · 4yr vest`:'No equity offered',wA:a.rsu>=b.rsu},
+    {ic:'🚀',lb:'Resume & Career Leverage',dA:`${ma.res}/10 — ${TYPELAB[a.type]||'Moderate signal'}`,dB:`${mb.res}/10 — ${TYPELAB[b.type]||'Moderate signal'}`,wA:ma.res>=mb.res},
+    {ic:'🏠',lb:'Work-Life Balance',dA:`${ma.wlb}/10 — ${a.rem==='remote'?'Fully remote':a.rem==='hybrid'?'Hybrid schedule':'Full in-office'}`,dB:`${mb.wlb}/10 — ${b.rem==='remote'?'Fully remote':b.rem==='hybrid'?'Hybrid schedule':'Full in-office'}`,wA:ma.wlb>=mb.wlb},
+    {ic:'🛡️',lb:'Job Stability & Risk',dA:`${ma.stb}/10 — ${STBLAB[a.type]||'Unknown'}`,dB:`${mb.stb}/10 — ${STBLAB[b.type]||'Unknown'}`,wA:ma.stb>=mb.stb},
+    {ic:'💵',lb:'Monthly Take-Home (After Tax + Loans)',dA:`${fmtF(ma.al)}/month ${ma.ar>=0?'· '+fmtF(ma.ar)+' after rent':'· tight after rent'}`,dB:`${fmtF(mb.al)}/month ${mb.ar>=0?'· '+fmtF(mb.ar)+' after rent':'· tight after rent'}`,wA:ma.al>=mb.al},
+    {ic:'📅',lb:'Year 1 Total Compensation',dA:`${fmtF(ma.yr1)} (base + signing + equity/yr + bonus)`,dB:`${fmtF(mb.yr1)} (base + signing + equity/yr + bonus)`,wA:ma.yr1>=mb.yr1},
+  ];
+  const bdH=cats.map(c=>`<div class="bdi"><div class="bdic">${c.ic}</div><div><div class="bdlbl">${c.lb}</div><div class="bddesc">${a.co}: ${c.dA}<br/>${b.co}: ${c.dB}</div></div><div class="bdw ${c.wA?'bwa':'bwb'}">${c.wA?a.co:b.co} wins</div></div>`).join('');
+
+  gv('res').innerHTML=`
+    <div class="sh" style="margin-bottom:0;padding-bottom:2rem;border-bottom:1px solid var(--border);">
+      <div class="sh-tag">Results</div>
+      <div class="sh-title">THE VERDICT <em>is in</em></div>
+    </div>
+    <div class="res-winner">
+      <div class="rw-tag">⚡ OfferGrad recommends</div>
+      <div class="rw-name">${wo.co}</div>
+      <div class="rw-sub">${wo.role} · ${loc(wo)} · scores ${ws}/100 vs ${ls}/100 for ${lo.co}</div>
+    </div>
+    <div class="sgrid">
+      <div class="scard ${win==='A'?'wc':''}">
+        <div class="sc-head">
+          <div><div class="sc-co">${a.co}</div><div class="sc-role">${a.role}</div><div class="sc-loc">${loc(a)}</div></div>
+          <div class="sc-score-wrap"><div class="sc-score-n" style="color:${win==='A'?'var(--lime)':'rgba(240,237,230,0.3)'}">${sA}</div><div class="sc-score-l">/ 100</div></div>
+        </div>
+        <div class="mlist">
+          <div class="mi"><span class="mn">Base salary</span><span class="mv neu">${fmtF(a.sal)}/yr</span></div>
+          <div class="mi"><span class="mn">COL-adjusted</span><span class="mv ${ma.ca>=mb.ca?'good':'bad'}">${fmtF(ma.ca)}/yr</span></div>
+          <div class="mi"><span class="mn">Monthly net (after tax)</span><span class="mv ${ma.nm>=mb.nm?'good':'bad'}">${fmtF(ma.nm)}/mo</span></div>
+          <div class="mi"><span class="mn">After loans</span><span class="mv ${ma.al>=mb.al?'good':'bad'}">${fmtF(ma.al)}/mo</span></div>
+          <div class="mi"><span class="mn">After rent</span><span class="mv ${ma.ar>=0?'good':'bad'}">${fmtF(ma.ar)}/mo</span></div>
+          <div class="mi"><span class="mn">Equity / year</span><span class="mv neu">${fmtF(ma.ry)}</span></div>
+          <div class="mi"><span class="mn">Year 1 total comp</span><span class="mv ${ma.yr1>=mb.yr1?'good':'neu'}">${fmtF(ma.yr1)}</span></div>
+          <div class="mi"><span class="mn">Resume score</span><span class="mv ${ma.res>=mb.res?'good':'neu'}">${ma.res}/10</span></div>
+          <div class="mi"><span class="mn">Stability score</span><span class="mv ${ma.stb>=mb.stb?'good':'neu'}">${ma.stb}/10</span></div>
+          <div class="mi"><span class="mn">WLB score</span><span class="mv ${ma.wlb>=mb.wlb?'good':'neu'}">${ma.wlb}/10</span></div>
+        </div>
+      </div>
+      <div class="scard ${win==='B'?'wc':''}">
+        <div class="sc-head">
+          <div><div class="sc-co">${b.co}</div><div class="sc-role">${b.role}</div><div class="sc-loc">${loc(b)}</div></div>
+          <div class="sc-score-wrap"><div class="sc-score-n" style="color:${win==='B'?'var(--lime)':'rgba(240,237,230,0.3)'}">${sB}</div><div class="sc-score-l">/ 100</div></div>
+        </div>
+        <div class="mlist">
+          <div class="mi"><span class="mn">Base salary</span><span class="mv neu">${fmtF(b.sal)}/yr</span></div>
+          <div class="mi"><span class="mn">COL-adjusted</span><span class="mv ${mb.ca>=ma.ca?'good':'bad'}">${fmtF(mb.ca)}/yr</span></div>
+          <div class="mi"><span class="mn">Monthly net (after tax)</span><span class="mv ${mb.nm>=ma.nm?'good':'bad'}">${fmtF(mb.nm)}/mo</span></div>
+          <div class="mi"><span class="mn">After loans</span><span class="mv ${mb.al>=ma.al?'good':'bad'}">${fmtF(mb.al)}/mo</span></div>
+          <div class="mi"><span class="mn">After rent</span><span class="mv ${mb.ar>=0?'good':'bad'}">${fmtF(mb.ar)}/mo</span></div>
+          <div class="mi"><span class="mn">Equity / year</span><span class="mv neu">${fmtF(mb.ry)}</span></div>
+          <div class="mi"><span class="mn">Year 1 total comp</span><span class="mv ${mb.yr1>=ma.yr1?'good':'neu'}">${fmtF(mb.yr1)}</span></div>
+          <div class="mi"><span class="mn">Resume score</span><span class="mv ${mb.res>=ma.res?'good':'neu'}">${mb.res}/10</span></div>
+          <div class="mi"><span class="mn">Stability score</span><span class="mv ${mb.stb>=ma.stb?'good':'neu'}">${mb.stb}/10</span></div>
+          <div class="mi"><span class="mn">WLB score</span><span class="mv ${mb.wlb>=ma.wlb?'good':'neu'}">${mb.wlb}/10</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="bchrt">
+      <div class="bchrt-title">COMPENSATION BREAKDOWN</div>
+      <div class="cbars">
+        <div><div class="blbl"><span>${a.co} — Base salary</span><span>${fmtF(a.sal)}/yr</span></div><div class="btrack"><div class="bfa" style="width:${Math.round(a.sal/Math.max(a.sal,b.sal,1)*100)}%">${fmt(a.sal)}</div></div></div>
+        <div><div class="blbl"><span>${b.co} — Base salary</span><span>${fmtF(b.sal)}/yr</span></div><div class="btrack"><div class="bfb" style="width:${Math.round(b.sal/Math.max(a.sal,b.sal,1)*100)}%">${fmt(b.sal)}</div></div></div>
+        <div><div class="blbl"><span>${a.co} — Year 1 total</span><span>${fmtF(ma.yr1)}</span></div><div class="btrack"><div class="bfa" style="width:${Math.round(ma.yr1/mx*100)}%">${fmt(ma.yr1)}</div></div></div>
+        <div><div class="blbl"><span>${b.co} — Year 1 total</span><span>${fmtF(mb.yr1)}</span></div><div class="btrack"><div class="bfb" style="width:${Math.round(mb.yr1/mx*100)}%">${fmt(mb.yr1)}</div></div></div>
+        <div><div class="blbl"><span>${a.co} — Monthly after loans</span><span>${fmtF(ma.al)}/mo</span></div><div class="btrack"><div class="bfa" style="width:${Math.round(ma.al/Math.max(ma.al,mb.al,1)*100)}%">${fmt(ma.al)}</div></div></div>
+        <div><div class="blbl"><span>${b.co} — Monthly after loans</span><span>${fmtF(mb.al)}/mo</span></div><div class="btrack"><div class="bfb" style="width:${Math.round(mb.al/Math.max(ma.al,mb.al,1)*100)}%">${fmt(mb.al)}</div></div></div>
+      </div>
+    </div>
+    <div class="rtalk">
+      <div class="rth"><div class="rtbdg">Real Talk</div><div class="rttitle">What this actually means for you</div></div>
+      <div class="rttext">${rt}</div>
+    </div>
+    <div class="bds"><div class="bd-title">CATEGORY BREAKDOWN</div>${bdH}</div>
+    <div class="neg-section">
+      <div class="neg-head"><div class="neg-badge">Pro Tips</div><div class="neg-title">Negotiation strategies for your situation</div></div>
+      <div class="neg-body">${negTips(wo,lo,ma,mb,win)}</div>
+    </div>
+  `;
+  go(3);
+}
+
+function shr(){if(navigator.share)navigator.share({title:'My OfferGrad Results',text:`I just compared offers between ${document.querySelector('.rw-name')?.textContent||'two companies'} on OfferGrad!`,url:window.location.href});else navigator.clipboard.writeText(window.location.href).then(()=>alert('Link copied to clipboard!'));}
+</script>
+</body>
+</html>
