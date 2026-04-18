@@ -388,5 +388,21 @@ setTimeout(()=>{document.getElementById('tsf').style.width='91%';},800);
 const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.style.opacity='1';}),{threshold:0.1});
 document.querySelectorAll('.feat,.how-step,.rev-card').forEach(el=>{el.style.opacity='0';el.style.transition='opacity 0.6s ease';obs.observe(el);});
 </script>
+const SB_URL = 'https://yvypphgfsvrbcxkgyxkv.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2eXBwaGdmc3ZyYmN4a2d5eGt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1Mjk0NTksImV4cCI6MjA5MjEwNTQ1OX0.ZsmoIJr6G2uQZJ9wsPR7Shr_iHxvkJSAj96mefxmLrc';
+
+async function loadStats() {
+  const res = await fetch(`${SB_URL}/rest/v1/stats?select=id,value`, {
+    headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` }
+  });
+  const data = await res.json();
+  const comp = data.find(r => r.id === 'comparisons')?.value || 0;
+  const avgDiff = data.find(r => r.id === 'avg_salary_diff')?.value || 0;
+  document.getElementById('c1').textContent = comp.toLocaleString();
+  document.getElementById('c2').textContent = avgDiff.toLocaleString();
+  document.getElementById('c3').textContent = '22';
+  document.getElementById('c4').textContent = '30';
+}
+loadStats();
 </body>
 </html>
