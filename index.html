@@ -369,42 +369,30 @@ footer{border-top:1px solid var(--border);padding:2rem 3rem;display:flex;justify
 </footer>
 
 <script>
-  
 const SB_URL = 'https://yvypphgfsvrbcxkgyxkv.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2eXBwaGdmc3ZyYmN4a2d5eGt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1Mjk0NTksImV4cCI6MjA5MjEwNTQ1OX0.ZsmoIJr6G2uQZJ9wsPR7Shr_iHxvkJSAj96mefxmLrc';
 
-// cursor
-const cur = ...
-// cursor
 const cur=document.getElementById('cur'),cur2=document.getElementById('cur2');
-let mx=0,my=0;
-document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=(mx-5)+'px';cur.style.top=(my-5)+'px';cur2.style.left=(mx-18)+'px';cur2.style.top=(my-18)+'px';});
-
-// nav
+document.addEventListener('mousemove',e=>{cur.style.left=(e.clientX-5)+'px';cur.style.top=(e.clientY-5)+'px';cur2.style.left=(e.clientX-18)+'px';cur2.style.top=(e.clientY-18)+'px';});
 window.addEventListener('scroll',()=>document.getElementById('nav').classList.toggle('stuck',scrollY>40));
-
-// terminal score bar
 setTimeout(()=>{document.getElementById('tsf').style.width='91%';},800);
-
-// scroll reveal
 const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.style.opacity='1';}),{threshold:0.1});
 document.querySelectorAll('.feat,.how-step,.rev-card').forEach(el=>{el.style.opacity='0';el.style.transition='opacity 0.6s ease';obs.observe(el);});
-</script>
-const SB_URL = 'https://yvypphgfsvrbcxkgyxkv.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2eXBwaGdmc3ZyYmN4a2d5eGt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1Mjk0NTksImV4cCI6MjA5MjEwNTQ1OX0.ZsmoIJr6G2uQZJ9wsPR7Shr_iHxvkJSAj96mefxmLrc';
 
-async function loadStats() {
-  const res = await fetch(`${SB_URL}/rest/v1/stats?select=id,value`, {
-    headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` }
-  });
-  const data = await res.json();
-  const comp = data.find(r => r.id === 'comparisons')?.value || 0;
-  const avgDiff = data.find(r => r.id === 'avg_salary_diff')?.value || 0;
-  document.getElementById('c1').textContent = comp.toLocaleString();
-  document.getElementById('c2').textContent = avgDiff.toLocaleString();
-  document.getElementById('c3').textContent = '22';
-  document.getElementById('c4').textContent = '30';
+async function loadStats(){
+  try{
+    const res=await fetch(`${SB_URL}/rest/v1/stats?select=id,value`,{headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`}});
+    const data=await res.json();
+    const comp=data.find(r=>r.id==='comparisons')?.value||0;
+    const avg=data.find(r=>r.id==='avg_salary_diff')?.value||0;
+    document.getElementById('c1').textContent=comp.toLocaleString();
+    document.getElementById('c2').textContent=avg>0?'$'+Math.round(avg).toLocaleString():'—';
+    document.getElementById('c3').textContent='22';
+    document.getElementById('c4').textContent='Free';
+  }catch(e){console.log('Stats error',e);}
 }
 loadStats();
+</script>
 </body>
 </html>
+
