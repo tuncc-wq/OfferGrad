@@ -608,6 +608,33 @@ function calc(){
       <div class="neg-body">${negTips(wo,lo,ma,mb,win)}</div>
     </div>
   `;
+  async function updateStats(salDiff) {
+  const res = await fetch(`${SB_URL}/rest/v1/stats?select=id,value`, {
+    headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` }
+  });
+  const data = await res.json();
+  const curr = data.find(r => r.id === 'comparisons')?.value || 0;
+  const currTotal = data.find(r => r.id === 'total_salary_diff')?.value || 0;
+  const newCount = curr + 1;
+  const newTotal = currTotal + Math.abs(salDiff);
+  const newAvg = Math.round(newTotal / newCount);
+
+  await fetch(`${SB_URL}/rest/v1/stats?id=eq.comparisons`, {
+    method: 'PATCH',
+    headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ value: newCount })
+  });
+  await fetch(`${SB_URL}/rest/v1/stats?id=eq.total_salary_diff`, {
+    method: 'PATCH',
+    headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ value: newTotal })
+  });
+  await fetch(`${SB_URL}/rest/v1/stats?id=eq.avg_salary_diff`, {
+    method: 'PATCH',
+    headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ value: newAvg })
+  });
+}
   go(3);
 }
 
